@@ -1,0 +1,338 @@
+{
+  "name": "LinkedIn Post MetaData extractor uisng LLM in Drive file",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "b77e3b73-036a-4639-ab8a-21d7aab92d80",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        800,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1IeGHw3t_jZBkNN_AVFBTsB_uQ1w-nO5c6x08ok0IoQw/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IeGHw3t_jZBkNN_AVFBTsB_uQ1w-nO5c6x08ok0IoQw/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "6893c3dd-1449-40f8-bc5c-3a5a167457b1",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1000,
+        260
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "vfGP5SGUvseP4DWb",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.urls }}",
+        "options": {}
+      },
+      "id": "734c9ea4-fae5-46d4-ba12-1a7600c78b98",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1740,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "urls",
+        "options": {}
+      },
+      "id": "9374bd61-5e17-4263-9781-765491e149b6",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        260
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "95bf1900-57dd-4058-a20d-1d4dd4e22fd1",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2960,
+        280
+      ],
+      "webhookId": "ed859fe7-8676-44af-9c65-0eaf97004984"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "3df77530-b6d8-4b1c-bad9-2c9042a3a28f",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1460,
+        260
+      ],
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "bodyContent",
+              "cssSelector": "body"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8f52db48-3089-4c2b-bbe4-9db24465533c",
+      "name": "HTML1",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1920,
+        260
+      ],
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "message.content",
+        "binaryPropertyName": "=data",
+        "options": {
+          "fileName": "={{ $('Loop Over Items').item.json.urls }}"
+        }
+      },
+      "id": "2b2414d4-d678-420c-9825-bb509688dc11",
+      "name": "Convert to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2480,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "name": "={{ $('Loop Over Items').item.json.urls }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1jmXOv67Ep0bvoHjokutDv0XFIsRZ3pIP",
+          "mode": "list",
+          "cachedResultName": "LinkedId Files",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1jmXOv67Ep0bvoHjokutDv0XFIsRZ3pIP"
+        },
+        "options": {}
+      },
+      "id": "da2b0934-7aca-4640-951f-88a81b9cb811",
+      "name": "Google Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2740,
+        240
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "0TdvKUkKSDnw3ZHn",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-4-TURBO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Given the HTML content of a LinkedIn post, extract the following metadata in JSON format:\n\n1. **text**: Extract all relevant text content from the post, including the main post text and excluding unnecessary elements such as LinkedIn sign-in prompts, navigation links, and footer links.\n   \n2. **author**: Identify the name of the author who created the post.\n\n3. **author_profile**: Retrieve the LinkedIn profile URL of the author, if available.\n\n4. **title**: Retrieve the main title or headline of the post, if available.\n\n5. **comments**: Extract details of each comment on the post. For each comment, include:\n   - **commenter**: Name of the person who made the comment.\n   - **commenter_profile**: LinkedIn profile URL of the commenter.\n   - **comment_text**: The text content of the comment.\n   - **timestamp**: When the comment was posted.\n\n6. **likes**: Count the number of likes on the post.\n\n7. **shares**: Number of times the post was shared.\n\n8. **hashtags**: Extract any hashtags used within the post content (e.g., `#technology` or `#innovation`).\n\n9. **timestamped**: Retrieve the timestamp indicating when the post was created.\n\n10. **post_url**: If available, include the URL of the LinkedIn post.\n\n11. **media_attachments**: If the post contains media (images, videos, or PDFs), list each attachment with:\n   - **media_type**: Type of media (e.g., \"image\", \"video\", \"document\").\n   - **media_url**: Direct URL to the media, if available.\n\nReturn the information in the following JSON structure:\n\n```json\n{\n  \"text\": \"Main content of the post here\",\n  \"author\": \"Author Name\",\n  \"author_profile\": \"Author's LinkedIn profile URL\",\n  \"title\": \"Post Title\",\n  \"comments\": [\n    {\n      \"commenter\": \"Commenter Name\",\n      \"commenter_profile\": \"Commenter's LinkedIn profile URL\",\n      \"comment_text\": \"Comment text here\",\n      \"timestamp\": \"Comment timestamp here\"\n    }\n  ],\n  \"likes\": \"Number of likes\",\n  \"shares\": \"Number of shares\",\n  \"hashtags\": [\"#hashtag1\", \"#hashtag2\"],\n  \"timestamped\": \"Post creation timestamp\",\n  \"post_url\": \"URL of the post\",\n  \"media_attachments\": [\n    {\n      \"media_type\": \"image\",\n      \"media_url\": \"URL of the image\"\n    }\n  ]\n}\n",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.bodyContent }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "id": "9b4402a7-6f0e-4f83-8672-d92cabd6c2b0",
+      "name": "OpenAI2",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.6,
+      "position": [
+        2120,
+        240
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "XIaXMqfPXX70ewVF",
+          "name": "OpenAi account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI2": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "30ab3ad3-9824-487e-a2a4-919b03617cb1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "558d88703fb65b2d0e44613bc35916258b0f0bf983c5d4730c00c424b77ca36a"
+  },
+  "id": "K2LOXMlQZ7AcLeAN",
+  "tags": []
+}

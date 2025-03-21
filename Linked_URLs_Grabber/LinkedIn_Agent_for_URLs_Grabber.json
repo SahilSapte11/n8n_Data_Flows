@@ -1,0 +1,140 @@
+{
+  "name": "LinkedIn Agent for URLs Grabber",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1ee2c778-c2a4-4b79-b794-1484a3ff5ce1",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.manualChatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {}
+      },
+      "id": "6668e712-1e0d-44ae-914c-149867a0b090",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        720,
+        420
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "XIaXMqfPXX70ewVF",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "LinkedIn_url_grabber",
+        "description": "Call this tool to grab the LinkedIn profile URLs",
+        "workflowId": {
+          "__rl": true,
+          "value": "LjzMske1ZxoE6cck",
+          "mode": "list",
+          "cachedResultName": "LinkedIn Urls Grabber"
+        }
+      },
+      "id": "962409aa-c0d8-446d-932e-b67aa8f4165c",
+      "name": "LinkedIn_url_grabber",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1020,
+        440
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "7bcc0bf5-656e-4a78-be5b-93bf3a2e8f1d",
+      "name": "Window Buffer Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are an AI that converts user input into a query string for job searches. Extract the job title, company industry, and location from the message, and format them into this structure:\n \"jobTitle=&companyIndustry=&location=&\"\n\nPopulate each field with the extracted information.\nIf a field is missing, leave it blank but maintain the structure (e.g., \"jobTitle=developer&companyIndustry=Cyber security&location=Chicago&\").\nReturn the completed query string to the tool and extract the LinkedIn urls using the tool."
+        }
+      },
+      "id": "fc1b7b77-75aa-4b3c-a330-2f9a3cd9548c",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        780,
+        220
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LinkedIn_url_grabber": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8a90766a-b90e-4bda-acef-cb24a57a68c0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "558d88703fb65b2d0e44613bc35916258b0f0bf983c5d4730c00c424b77ca36a"
+  },
+  "id": "qp0yqYsNdz8UwrpY",
+  "tags": []
+}

@@ -1,0 +1,251 @@
+{
+  "name": "LinkedIn Profile URLs Grabber",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "f1082b79-2837-4f68-aafe-c37a274653c7",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        560,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.google.com/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "=site:linkedin.com/in/ {{ $json.message.content.jobTitle }}{{ $json.message.content.companyIndustry }}{{ $json.message.content.location }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.82 Safari/537.36"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b021817e-3479-4576-83c6-2843c0b3ec81",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Access the HTML content from the HTTP Request node\nconst htmlContent = $json[\"data\"];  // Use the key that holds the HTML response, adjust this if needed.\n\nconsole.log('HTML Content:', htmlContent);  // Debugging: log the HTML content to check if it's correct\n\n// Regular Expression to match LinkedIn profile URLs\nconst regex = /https:\\/\\/www\\.linkedin\\.com\\/in\\/[^\\s\"']+/g;\n\n// Extracting all matching LinkedIn URLs\nconst linkedinUrls = htmlContent.match(regex);\n\nconsole.log('Extracted LinkedIn URLs:', linkedinUrls);  // Debugging: log the extracted URLs\n\n// If no URLs found, return an empty array to prevent workflow stopping\nif (!linkedinUrls) {\n  return [];  // Output empty data to ensure the workflow doesn't stop\n}\n\n// Return the extracted URLs in an array format that can be used by other nodes\nreturn linkedinUrls.map(url => ({ url }));\n"
+      },
+      "id": "f32a4ee5-c23a-4f51-8de3-0b6974ad719b",
+      "name": "Code",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Parse the JSON 'query' and output the following parameters separately:\n\njobTitle\ncompanyIndustry\nlocation",
+              "role": "system"
+            },
+            {
+              "content": "={{ JSON.stringify($json.querry) }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "id": "b64f1d8f-ecff-4795-ac88-64064ee9b032",
+      "name": "OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.5,
+      "position": [
+        740,
+        240
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "XIaXMqfPXX70ewVF",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1IeGHw3t_jZBkNN_AVFBTsB_uQ1w-nO5c6x08ok0IoQw/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IeGHw3t_jZBkNN_AVFBTsB_uQ1w-nO5c6x08ok0IoQw/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "urls": "={{ $json.url }}"
+          },
+          "matchingColumns": [
+            "urls"
+          ],
+          "schema": [
+            {
+              "id": "urls",
+              "displayName": "urls",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0a38a986-debd-4c18-b4bc-2ef79215cbd9",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1560,
+        240
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "vfGP5SGUvseP4DWb",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5101a27c-d146-4b03-8aa3-7ae352071418",
+              "name": "response",
+              "value": "done",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "02a53a51-bfe4-4f46-9c1b-7e3807797b13",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1780,
+        240
+      ]
+    }
+  ],
+  "pinData": {
+    "Execute Workflow Trigger": [
+      {
+        "json": {
+          "querry": "jobTitle=&companyIndustry=&location=&"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "67cae02a-82fc-4d51-bda8-84d3f2260327",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "558d88703fb65b2d0e44613bc35916258b0f0bf983c5d4730c00c424b77ca36a"
+  },
+  "id": "LjzMske1ZxoE6cck",
+  "tags": []
+}

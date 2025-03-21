@@ -1,0 +1,384 @@
+{
+  "name": "LinkedIn Post MetaData Supabase Vector Store",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "52b3df90-f04f-4a62-9c28-2ffff08795f1",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        800,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1IeGHw3t_jZBkNN_AVFBTsB_uQ1w-nO5c6x08ok0IoQw/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1IeGHw3t_jZBkNN_AVFBTsB_uQ1w-nO5c6x08ok0IoQw/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "d67a3d48-7150-4158-9796-da3187e57853",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1000,
+        260
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "vfGP5SGUvseP4DWb",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.urls }}",
+        "options": {}
+      },
+      "id": "2a6931a4-bc88-4464-ab0b-2423ade57459",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1740,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "urls",
+        "options": {}
+      },
+      "id": "224844f7-2a33-4007-8949-baa3196b4467",
+      "name": "Split Out",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        260
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "cd9db8b9-f4ee-422b-9e4d-2f6b7c830261",
+      "name": "Wait",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3400,
+        280
+      ],
+      "webhookId": "c3cfeeba-ceb9-4523-9140-a34edd2c6710"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "1a21b8cd-9a6c-490d-af78-d2ea362584e3",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1460,
+        260
+      ],
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "bodyContent",
+              "cssSelector": "body"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "59a44724-3331-4911-b4f7-cb16d4253394",
+      "name": "HTML1",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        1920,
+        260
+      ],
+      "notesInFlow": false
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "3c2eb883-25ac-492e-9969-bd0d2bf8f9fb",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1,
+      "position": [
+        2720,
+        140
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "XIaXMqfPXX70ewVF",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "c5a0f85a-5aef-4695-be45-a5c42c9f9268",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [
+        2920,
+        60
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 800,
+        "chunkOverlap": 80,
+        "options": {}
+      },
+      "id": "f32ac318-7232-413a-89eb-768dd1288beb",
+      "name": "Recursive Character Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        2880,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-4-TURBO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "Given the HTML content of a LinkedIn post, extract the following metadata in JSON format. The main text content should be under the \"content\" field, and all other properties should be organized within a \"metadata\" dictionary:\n\n1. **content**: Extract all relevant text content from the post, including the main post text and excluding unnecessary elements such as LinkedIn sign-in prompts, navigation links, and footer links.\n\n2. **metadata**:\n   - **author**: Identify the name of the author who created the post.\n   - **author_profile**: Retrieve the LinkedIn profile URL of the author, if available.\n   - **title**: Retrieve the main title or headline of the post, if available.\n   - **comments**: Extract details of each comment on the post. For each comment, include:\n     - **commenter**: Name of the person who made the comment.\n     - **commenter_profile**: LinkedIn profile URL of the commenter.\n     - **comment_text**: The text content of the comment.\n     - **timestamp**: When the comment was posted.\n   - **likes**: Count the number of likes on the post.\n   - **shares**: Number of times the post was shared.\n   - **hashtags**: Extract any hashtags used within the post content (e.g., `#technology` or `#innovation`).\n   - **timestamped**: Retrieve the timestamp indicating when the post was created.\n   - **post_url**: If available, include the URL of the LinkedIn post.\n   - **media_attachments**: If the post contains media (images, videos, or PDFs), list each attachment with:\n     - **media_type**: Type of media (e.g., \"image\", \"video\", \"document\").\n     - **media_url**: Direct URL to the media, if available.\n\nReturn the information in the following JSON structure:\n\n```json\n{\n  \"content\": \"Main content of the post here\",\n  \"metadata\": {\n    \"author\": \"Author Name\",\n    \"author_profile\": \"Author's LinkedIn profile URL\",\n    \"title\": \"Post Title\",\n    \"comments\": [\n      {\n        \"commenter\": \"Commenter Name\",\n        \"commenter_profile\": \"Commenter's LinkedIn profile URL\",\n        \"comment_text\": \"Comment text here\",\n        \"timestamp\": \"Comment timestamp here\"\n      }\n    ],\n    \"likes\": \"Number of likes\",\n    \"shares\": \"Number of shares\",\n    \"hashtags\": [\"#hashtag1\", \"#hashtag2\"],\n    \"timestamped\": \"Post creation timestamp\",\n    \"post_url\": \"URL of the post\",\n    \"media_attachments\": [\n      {\n        \"media_type\": \"image\",\n        \"media_url\": \"URL of the image\"\n      }\n    ]\n  }\n}\n",
+              "role": "system"
+            },
+            {
+              "content": "={{ $json.bodyContent }}"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "id": "8ab7bc67-7039-4557-b72e-f54ae2710b14",
+      "name": "OpenAI2",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.6,
+      "position": [
+        2120,
+        240
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "XIaXMqfPXX70ewVF",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {
+          "queryName": "match_documents"
+        }
+      },
+      "id": "c31ffab7-a816-4c9b-8443-149b73422a99",
+      "name": "Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [
+        2640,
+        -120
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "Q5wXCc49I28EkAHi",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "HTML1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI2": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1009f9e8-7515-4f69-a241-ae2f73bf4075",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "558d88703fb65b2d0e44613bc35916258b0f0bf983c5d4730c00c424b77ca36a"
+  },
+  "id": "SkmqxUrNhgaXdJAy",
+  "tags": []
+}
