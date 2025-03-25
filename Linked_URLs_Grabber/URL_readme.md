@@ -38,8 +38,9 @@ This workflow automates the process of searching for **LinkedIn profiles** based
 
 ## 📌 Workflow Diagram  
 
-**🔹 Workflow Image:**  
+**🔹 URLs Grabber Workflow:**  
 ![n8n LinkedIn Profile Extraction Workflow](LinkedIn_Profile_URLs_Grabber.png)  
+**🔹 Agent Workflow:**  
 ![n8n LinkedIn Agent worlflow](LinkedIn_Agent_for_URLs_Grabber.png)  
 
 ---
